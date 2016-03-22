@@ -20,7 +20,11 @@ import (
 )
 
 func testLogger() *log.Logger {
-	return log.New(os.Stderr, "", log.LstdFlags)
+	return prefixedTestLogger("")
+}
+
+func prefixedTestLogger(prefix string) *log.Logger {
+	return log.New(os.Stderr, prefix, log.LstdFlags)
 }
 
 type MockTaskStateUpdater struct {
@@ -65,6 +69,7 @@ func testTaskRunnerFromAlloc(restarts bool, alloc *structs.Allocation) (*MockTas
 func TestTaskRunner_SimpleRun(t *testing.T) {
 	ctestutil.ExecCompatible(t)
 	upd, tr := testTaskRunner(false)
+	tr.MarkReceived()
 	go tr.Run()
 	defer tr.Destroy()
 	defer tr.ctx.AllocDir.Destroy()
@@ -99,6 +104,7 @@ func TestTaskRunner_SimpleRun(t *testing.T) {
 func TestTaskRunner_Destroy(t *testing.T) {
 	ctestutil.ExecCompatible(t)
 	upd, tr := testTaskRunner(true)
+	tr.MarkReceived()
 	defer tr.ctx.AllocDir.Destroy()
 
 	// Change command to ensure we run for a bit
@@ -255,6 +261,7 @@ func TestTaskRunner_Download_List(t *testing.T) {
 	task.Artifacts = []*structs.TaskArtifact{&artifact1, &artifact2}
 
 	upd, tr := testTaskRunnerFromAlloc(false, alloc)
+	tr.MarkReceived()
 	go tr.Run()
 	defer tr.Destroy()
 	defer tr.ctx.AllocDir.Destroy()
@@ -319,6 +326,7 @@ func TestTaskRunner_Download_Retries(t *testing.T) {
 	}
 
 	upd, tr := testTaskRunnerFromAlloc(true, alloc)
+	tr.MarkReceived()
 	go tr.Run()
 	defer tr.Destroy()
 	defer tr.ctx.AllocDir.Destroy()
